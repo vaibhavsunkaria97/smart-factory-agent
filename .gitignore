@@ -1,0 +1,16 @@
+# virtual environment
+.venv/
+venv/
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# outputs which i will regenerate
+alerts.json
+evaluation_results.json
+
+# OS junk
+.DS_Store
+Thumbs.db
