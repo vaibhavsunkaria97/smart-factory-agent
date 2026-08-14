@@ -29,11 +29,11 @@ def generate_data(rows, seed, out):
             label = 'abnormal'
             abnormal_channels = np.random.choice(['temp', 'pressure', 'vibration'], size=np.random.randint(1, 4), replace=False)
             if 'temp' in abnormal_channels:
-                temp = np.random.uniform(40, 43) if np.random.rand() < 0.5 else np.random.uniform(52, 55)
+                temp = np.random.uniform(38.0, 42.5) if np.random.rand() < 0.5 else np.random.uniform(52.5, 58.0)
             if 'pressure' in abnormal_channels:
-                pressure = np.random.uniform(0.90, 0.97) if np.random.rand() < 0.5 else np.random.uniform(1.08, 1.10)
+                pressure = np.random.uniform(0.90, 0.96) if np.random.rand() < 0.5 else np.random.uniform(1.09, 1.18)
             if 'vibration' in abnormal_channels:
-                vibration = np.random.uniform(0.10, 0.15)
+                vibration = np.random.uniform(0.075, 0.15)
 
         # Introduce missing values
         if np.random.rand() < 0.02:
@@ -75,6 +75,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--rows", type=int, default=300)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--out", type=str, default="data.csv")
+    parser.add_argument("--out", type=str, default="data/sensor_data.csv")
     args = parser.parse_args()
     generate_data(args.rows, args.seed, args.out)
