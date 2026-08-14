@@ -3,6 +3,8 @@ from datetime import datetime
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
+SENSOR_COLS = ["temp", "pressure", "vibration"]
+
 @dataclass
 class CleanResult:
     """Holds both the raw and standardized data, as well as a report on the cleaning process.
@@ -21,10 +23,12 @@ def preprocess(df):
     df = df.drop_duplicates(subset='timestamp', keep='first')
 
     # Fill missing sensor values using time-aware interpolation, then forward and back fill for gaps at the edges
-    df = df.set_index('timestamp')
-    df = df.interpolate(method='time')
-    df = df.fillna(method='ffill')
-    df = df.fillna(method='bfill')
+    df_sensor = df[SENSOR_COLS].copy()
+    df_sensor = df_sensor.set_index('timestamp')
+    df_sensor = df_sensor.interpolate(method='time')
+    df_sensor = df_sensor.fillna(method='ffill')
+    df_sensor = df_sensor.fillna(method='bfill')
+    df[SENSOR_COLS] = df_sensor.reset_index(drop=True)
 
     # Create a separate z-score standardized copy of only the sensor columns
     sensor_columns = [col for col in df.columns if col != 'timestamp']
