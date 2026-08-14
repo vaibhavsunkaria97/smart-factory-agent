@@ -15,20 +15,17 @@ class CleanResult:
     report: dict
 
 def preprocess(df):
-    # Parse timestamps with errors="coerce" and drop unparseable rows
-    df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
-    df = df.dropna(subset=['timestamp'])
+    df = df.copy()
+    df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
+    df = df.dropna(subset=["timestamp"])
+    df = df.sort_values("timestamp")
+    df = df.drop_duplicates(subset=["timestamp"], keep="first")
 
-    # Drop duplicate timestamps, keeping the first
-    df = df.drop_duplicates(subset='timestamp', keep='first')
+    missing_before = int(df[SENSOR_COLS].isna().sum().sum())
 
-    # Fill missing sensor values using time-aware interpolation, then forward and back fill for gaps at the edges
-    df_sensor = df[SENSOR_COLS].copy()
-    df_sensor = df_sensor.set_index('timestamp')
-    df_sensor = df_sensor.interpolate(method='time')
-    df_sensor = df_sensor.fillna(method='ffill')
-    df_sensor = df_sensor.fillna(method='bfill')
-    df[SENSOR_COLS] = df_sensor.reset_index(drop=True)
+    df = df.set_index("timestamp")
+    df[SENSOR_COLS] = df[SENSOR_COLS].interpolate(method="time").ffill().bfill()
+    df = df.reset_index()
 
     # Create a separate z-score standardized copy of only the sensor columns
     sensor_columns = [col for col in df.columns if col != 'timestamp']
@@ -38,7 +35,7 @@ def preprocess(df):
     # Create a report dict with counts of duplicates removed and values imputed
     report = {
         'duplicates_removed': len(df) - len(df.drop_duplicates(subset='timestamp', keep='first')),
-        'values_imputed': df.isnull().sum().sum() - standardized_df.isnull().sum().sum()
+        'values_imputed': missing_before - int(standardized_df[SENSOR_COLS].isna().sum().sum())
     }
 
     return CleanResult(df.reset_index(), standardized_df, report)
