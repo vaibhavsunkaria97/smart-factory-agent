@@ -4,7 +4,7 @@ import argparse
 from datetime import datetime, timedelta
 
 def generate_data(rows, seed, out):
-    np.random.default_rng(seed)
+    np.random.seed(seed)
     data = {
         'timestamp': [],
         'temp': [],
@@ -35,21 +35,25 @@ def generate_data(rows, seed, out):
             if 'vibration' in abnormal_channels:
                 vibration = np.random.uniform(0.075, 0.15)
 
-        # Introduce missing values
-        if np.random.rand() < 0.02:
-            if np.random.rand() < 1/3:
-                temp = np.nan
-            elif np.random.rand() < 2/3:
-                pressure = np.nan
-            else:
-                vibration = np.nan
-
         data['temp'].append(temp)
         data['pressure'].append(pressure)
         data['vibration'].append(vibration)
         data['label'].append(label)
 
-    # Introduce duplicate timestamps
+    # Inject missing values into normal rows only
+    n_missing = max(3, int(0.02 * rows * 3))  # 3 sensor columns
+    normal_indices = [i for i, label in enumerate(data['label']) if label == 'normal']
+    # Create list of all (row, col) pairs for normal rows
+    cells = [(i, col) for i in normal_indices for col in ['temp', 'pressure', 'vibration']]
+    # If n_missing exceeds available cells, reduce it
+    n_missing = min(n_missing, len(cells))
+    if n_missing > 0:
+        chosen_indices = np.random.choice(len(cells), size=n_missing, replace=False)
+        for idx in chosen_indices:
+            row_idx, col = cells[idx]
+            data[col][row_idx] = np.nan
+
+    # Introduce duplicate timestamps (exactly 2 duplicates)
     duplicate_indices = np.random.choice(rows, size=2, replace=False)
     for index in duplicate_indices:
         data['timestamp'].append(data['timestamp'][index])
